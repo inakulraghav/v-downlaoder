@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Video Downloader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-purple: #9d4edd;
+            --neon-blue: #00f5d4;
+            --neon-pink: #f15bb5;
+            --bg-dark: #09090b;
+        }
+
+        body {
+            margin: 0; 
+            padding: 40px 20px; 
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px; 
+            color: #ffffff; 
+            min-height: 100vh;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+
+        .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -1; opacity: 0.5; animation: pulse 8s infinite alternate; }
+        .orb-left { width: 40vw; height: 40vw; min-width: 300px; min-height: 300px; background: var(--neon-purple); top: 10%; left: -10%; }
+        .orb-right { width: 50vw; height: 50vw; min-width: 400px; min-height: 400px; background: var(--neon-blue); bottom: 10%; right: -10%; animation-delay: -4s;}
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.4; } 100% { transform: scale(1.2); opacity: 0.7; } }
+
+        .main-heading { text-align: center; margin-bottom: 30px; z-index: 10; }
+        .main-heading h1 { font-size: clamp(28px, 5vw, 45px); margin: 0; background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 1px; }
+
+        .studio-container { width: 100%; max-width: 950px; background: rgba(15, 15, 20, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05); display: flex; flex-direction: row; overflow: hidden; z-index: 10;}
+        
+        .brand-section { flex: 1; padding: 50px 40px; background: linear-gradient(135deg, rgba(157, 78, 221, 0.1), rgba(0, 245, 212, 0.05)); border-right: 1px solid rgba(255, 255, 255, 0.05); display: flex; flex-direction: column; justify-content: center; }
+        .brand-section h2 { font-size: clamp(25px, 4vw, 35px); margin: 0; color: white; text-transform: uppercase; }
+        .brand-section p { color: #aaa; font-size: 16px; margin-top: 15px; line-height: 1.5; }
+
+        .control-section { flex: 1.4; padding: 50px 40px; display: flex; flex-direction: column; justify-content: center; }
+        .form-group { margin-bottom: 25px; }
+        
+        label { display: block; margin-bottom: 10px; font-weight: 600; color: #ccc; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        input, select { width: 100%; padding: 16px 20px; background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; font-size: 16px; font-family: inherit; transition: all 0.3s; outline: none; box-sizing: border-box; }
+        input:focus, select:focus { border-color: var(--neon-blue); background: rgba(0, 0, 0, 0.8); }
+        select option { background: #111; color: white; }
+
+        .btn { width: 100%; padding: 18px; border: none; border-radius: 12px; background: linear-gradient(90deg, var(--neon-purple), var(--neon-blue)); color: #000; font-weight: 800; font-size: 18px; font-family: inherit; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(0, 245, 212, 0.2); margin-top: 5px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 245, 212, 0.4); color: white; }
+        .btn:disabled { background: #333; color: #777; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px;}
+        .platform-label { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; font-weight: bold;}
+        .platform-label:hover { background: rgba(255,255,255,0.1); }
+        input[type="radio"]:checked + .platform-label { background: rgba(0, 245, 212, 0.2); border-color: var(--neon-blue); color: var(--neon-blue); }
+        input[name="platform"] { display: none; }
+
+        .radio-group { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 10px; }
+        .radio-group label { display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 16px; font-weight: 600;}
+        input[type="radio"].format-radio { accent-color: var(--neon-blue); width: 20px; height: 20px; display: inline-block; }
+        
+        .hidden { display: none; }
+        #status { margin-top: 25px; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 16px; background: rgba(0,0,0,0.4); border: 1px solid transparent; }
+
+        /* Steps aur Benefits */
+        .info-container { width: 100%; max-width: 950px; margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; z-index: 10; align-items: start; }
+        .info-card { background: rgba(15, 15, 20, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .info-card h3 { color: var(--neon-pink); margin-top: 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .info-card ol, .info-card ul { color: #ccc; line-height: 1.8; font-size: 15px; padding-left: 20px; margin: 0; }
+        .info-card li { margin-bottom: 12px; }
+        .info-card b { color: white; }
+
+        /* Footer Section */
+        footer { margin-top: 50px; padding: 30px 20px; width: 100%; text-align: center; z-index: 10; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.3); }
+        .disclaimer { color: #888; font-size: 13px; max-width: 800px; margin: 0 auto 15px auto; line-height: 1.5; }
+        .contact-info { color: #fff; font-size: 15px; font-weight: 600; line-height: 1.6; }
+        .contact-info a { color: var(--neon-blue); text-decoration: none; transition: 0.3s; }
+        .contact-info a:hover { color: var(--neon-pink); }
+        .highlight-name { color: var(--neon-pink); font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* --- NEW: POPUP MODAL STYLES --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: all; }
+        
+        .modal-card {
+            background: rgba(15, 15, 20, 0.95);
+            border: 1px solid var(--neon-blue);
+            border-radius: 20px; padding: 40px; text-align: center; max-width: 400px; width: 90%;
+            box-shadow: 0 0 40px rgba(0, 245, 212, 0.2);
+            transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal-card { transform: translateY(0); }
+        
+        .modal-card h3 { color: var(--neon-blue); margin: 0 0 15px 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;}
+        .modal-card p { color: #ccc; font-size: 16px; margin-bottom: 25px; line-height: 1.5; }
+        
+        .modal-btn {
+            background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple));
+            color: white; padding: 12px 30px; border-radius: 10px; font-weight: bold; cursor: pointer;
+            border: none; font-size: 16px; text-transform: uppercase; transition: 0.3s;
+        }
+        .modal-btn:hover { box-shadow: 0 5px 15px rgba(241, 91, 181, 0.4); transform: translateY(-2px); }
+
+        /* Loader Animation */
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--neon-blue);
+            border-radius: 50%; width: 50px; height: 50px;
+            animation: spin 1s linear infinite; margin: 0 auto 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            body { padding: 20px 15px; padding-top: 30px; }
+            .studio-container { flex-direction: column; border-radius: 20px; }
+            .brand-section { padding: 30px 20px; text-align: center; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+            .control-section { padding: 30px 20px; }
+            .platform-grid { grid-template-columns: 1fr 1fr; }
+            .info-container { grid-template-columns: 1fr; margin-top: 25px; }
+            input, select, .btn { padding: 15px; font-size: 15px; }
+            .main-heading h1 { font-size: 26px; }
+            .modal-card { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="glow-orb orb-left"></div>
+    <div class="glow-orb orb-right"></div>
+
+    <div class="main-heading">
+        <h1>Universal Video Downloader</h1>
+    </div>
+
+    <!-- Main Downloader Card -->
+    <div data-tilt data-tilt-max="2" data-tilt-speed="1000" data-tilt-glare="true" data-tilt-max-glare="0.1" style="width: 100%; max-width: 950px; display: flex; justify-content: center; z-index: 10;">
+        
+        <div class="studio-container">
+            <div class="brand-section">
+                <h2>All-in-One Downloader</h2>
+                <p>Support for YouTube, Instagram, Facebook, TikTok, and more. Select platform, paste link, and download instantly in High Quality.</p>
+            </div>
+
+            <div class="control-section">
+                <!-- Form Submission pe onsubmit event add kiya gaya hai popup trigger karne ke liye -->
+                <form id="downloadForm" method="POST" action="/download" onsubmit="showDownloadModal()">
+                    
+                    <label>Select Platform</label>
+                    <div class="platform-grid">
+                        <label>
+                            <input type="radio" name="platform" value="YouTube" checked>
+                            <div class="platform-label">🔴 YouTube</div>
+                        </label>
+                        <label>
+                            <input type="radio" name="platform" value="Instagram">
+                            <div class="platform-label">📸 Instagram</div>
+                        </label>
+                        <label>
+                            <input type="radio" name="platform" value="Facebook">
+                            <div class="platform-label">📘 Facebook</div>
+                        </label>
+                        <label>
+                            <input type="radio" name="platform" value="TikTok">
+                            <div class="platform-label">🎵 TikTok</div>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Video Link</label>
+                        <input type="text" id="url" name="url" placeholder="Paste video link here..." autocomplete="off" required>
+                    </div>
+
+                    <button type="button" class="btn" id="checkBtn" onclick="fetchInfo()">Check Video</button>
+
+                    <div id="optionsDiv" class="hidden">
+                        <div class="form-group" style="margin-top: 30px;">
+                            <label>Choose Format</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="format" class="format-radio" value="MP4" checked onchange="updateUI()"> Video (MP4)</label>
+                                <label><input type="radio" name="format" class="format-radio" value="MP3" onchange="updateUI()"> Audio (MP3)</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label id="qualityLabel">Select Quality</label>
+                            <select name="quality" id="qualitySelect"></select>
+                        </div>
+
+                        <button type="submit" class="btn" id="downloadBtn" style="background: linear-gradient(90deg, #f15bb5, #9d4edd); color: white;">Download Now</button>
+                    </div>
+                    
+                    <div id="status" style="display: none;"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Steps and Benefits -->
+    <div class="info-container">
+        <!-- Steps to Use -->
+        <div class="info-card">
+            <h3>📖 How To Use</h3>
+            <ol>
+                <li>Choose your platform (YouTube, Instagram, etc.).</li>
+                <li>Copy the video link from the original app or website.</li>
+                <li>Paste the copied link in the input box above.</li>
+                <li>Click on <b>"Check Video"</b> and wait for analysis.</li>
+                <li>Select your preferred format (MP4/MP3) and quality.</li>
+                <li>Hit <b>"Download Now"</b> to save the file.</li>
+            </ol>
+        </div>
+
+        <!-- Benefits -->
+        <div class="info-card">
+            <h3>🚀 Why Use This Tool?</h3>
+            <ul>
+                <li><b>100% Free & No Ads:</b> Enjoy a clean, distraction-free experience without annoying pop-ups.</li>
+                <li><b>High Quality:</b> Downloads videos in the maximum available resolution automatically.</li>
+                <li><b>Universal Support:</b> Works flawlessly for YouTube, Reels, TikToks, Shorts, and more.</li>
+                <li><b>Fast & Secure:</b> Direct server processing ensures faster downloads and complete privacy.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Footer with Your Details -->
+    <footer>
+        <div class="disclaimer">
+            <strong>⚠️ Copyright Disclaimer:</strong> This web application is designed strictly for personal and educational use. We do not host any copyrighted material. Users are solely responsible for ensuring they have the right to download and use the media. Please respect the copyright of content creators and avoid downloading pirated content.
+        </div>
+        <div class="contact-info">
+            &copy; 2026 Developed & Maintained by <span class="highlight-name">Nakul Singh</span> <br><br>
+            Reach out for queries or collaborations:<br>
+            Email: <a href="mailto:raghavnakul28@gmail.com">raghavnakul28@gmail.com</a> | 
+            Instagram: <a href="https://instagram.com/inakulraghav" target="_blank">@inakulraghav</a>
+        </div>
+    </footer>
+
+    <!-- NEW: POPUP MODAL HTML -->
+    <div id="downloadModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="loader"></div>
+            <h3>Download Started! 🚀</h3>
+            <p>Your file is being processed on our servers. The download will begin automatically in a few moments.</p>
+            <button type="button" class="modal-btn" onclick="closeModal()">Awesome!</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+    <script>
+        if (window.innerWidth <= 768) {
+            const element = document.querySelector('[data-tilt]');
+            if (element && element.vanillaTilt) { element.vanillaTilt.destroy(); }
+        }
+
+        let availableResolutions = [];
+
+        function showStatus(text, color, borderColor) {
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.innerHTML = text;
+            status.style.color = color;
+            status.style.borderColor = borderColor;
+        }
+
+        async function fetchInfo() {
+            const url = document.getElementById('url').value;
+            const checkBtn = document.getElementById('checkBtn');
+
+            if(!url) { 
+                showStatus("⚠️ Please enter a link first.", "#ff4757", "rgba(255, 71, 87, 0.3)");
+                return; 
+            }
+
+            showStatus("🔄 Analyzing video... Please wait.", "#00f5d4", "rgba(0, 245, 212, 0.3)");
+            checkBtn.disabled = true;
+
+            try {
+                const response = await fetch('/fetch_info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    availableResolutions = data.resolutions;
+                    document.getElementById('optionsDiv').classList.remove('hidden');
+                    checkBtn.style.display = 'none'; 
+                    showStatus(`✅ Found: ${data.title.substring(0, 30)}...`, "#2ed573", "rgba(46, 213, 115, 0.3)");
+                    updateUI();
+                } else {
+                    showStatus(`❌ Error: Could not fetch details. Check link.`, "#ff4757", "rgba(255, 71, 87, 0.3)");
+                    checkBtn.disabled = false;
+                }
+            } catch (err) {
+                showStatus("🔌 Network error. Please try again.", "#ff4757", "rgba(255, 71, 87, 0.3)");
+                checkBtn.disabled = false;
+            }
+        }
+
+        function updateUI() {
+            const isMp4 = document.querySelector('input[name="format"]:checked').value === 'MP4';
+            const select = document.getElementById('qualitySelect');
+            const label = document.getElementById('qualityLabel');
+            
+            select.innerHTML = '';
+            
+            if (isMp4) {
+                label.innerText = "Video Quality";
+                availableResolutions.forEach(res => {
+                    if(res === 'Best') {
+                        select.innerHTML += `<option value="${res}">Highest Available Quality</option>`;
+                    } else {
+                        select.innerHTML += `<option value="${res}">${res}p Resolution</option>`;
+                    }
+                });
+            } else {
+                label.innerText = "Audio Quality";
+                if(availableResolutions[0] === 'Best') {
+                     select.innerHTML += `<option value="Best">High Quality Audio</option>`;
+                } else {
+                    ['320', '256', '192', '128'].forEach(bit => {
+                        select.innerHTML += `<option value="${bit}">${bit} kbps</option>`;
+                    });
+                }
+            }
+        }
+
+        // --- NEW: POPUP LOGIC ---
+        function showDownloadModal() {
+            const modal = document.getElementById('downloadModal');
+            modal.classList.add('show');
+            
+            // Auto close after 7 seconds just in case user doesn't click 'Awesome'
+            setTimeout(closeModal, 7000);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('downloadModal');
+            modal.classList.remove('show');
+        }
+    </script>
+</body>
+</html>
